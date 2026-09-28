@@ -1,5 +1,5 @@
 # Campus Suite (flat version - all files in one folder)
-
+https://yogapriyan-designer.github.io/node/
 Open `index.html` (double-click, or VS Code Live Server). Two cards:
 - Smart Room System -> room.html
 - Attendance Intelligence -> attendance.html
