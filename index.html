@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Campus Suite</title>
+<style>
+:root{--bg:#0d1020;--tx:#eef0f8;--mu:#a0a8c4}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden}
+body{margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;background:radial-gradient(circle at 20% 20%,#1e3a8a55,transparent 50%),radial-gradient(circle at 80% 80%,#7c3aed44,transparent 50%),var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+h1{margin:0 0 6px;font-size:clamp(26px,5vw,42px);letter-spacing:.04em;text-align:center}
+p.sub{margin:0 0 44px;color:var(--mu);text-align:center}
+.grid{display:grid;gap:44px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));width:100%;max-width:780px}
+a.card{display:block;height:100%;text-decoration:none;color:inherit;padding:28px;border-radius:20px;background:rgba(13,16,32,.88);transition:transform .2s}
+.electric-border:hover a.card,a.card:focus-visible{transform:translateY(-4px);outline:none}
+.ic{font-size:44px;margin-bottom:10px}
+.card h2{margin:0 0 6px;font-size:22px}
+.card span{color:var(--mu);font-size:14px}
+.go{display:inline-block;margin-top:16px;padding:8px 16px;border-radius:99px;background:#4f46e5;color:#fff!important;font-weight:600;font-size:14px}
+.card.r .go{background:#0891b2}
+
+/* ===== Electric border (ported from ElectricBorder React component) ===== */
+.electric-border{position:relative;border-radius:20px;overflow:visible;isolation:isolate}
+.eb-canvas-container{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:2}
+.eb-canvas{display:block}
+.eb-content{position:relative;border-radius:inherit;z-index:1;height:100%}
+.eb-layers{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:0}
+.eb-glow-1,.eb-glow-2,.eb-background-glow{position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-sizing:border-box}
+.eb-glow-1{border:2px solid var(--electric-border-color);border:2px solid color-mix(in srgb,var(--electric-border-color) 60%,transparent);filter:blur(1px)}
+.eb-glow-2{border:2px solid var(--electric-border-color);filter:blur(4px)}
+.eb-background-glow{z-index:-1;transform:scale(1.1);filter:blur(32px);opacity:.3;background:linear-gradient(-30deg,var(--electric-border-color),transparent,var(--electric-border-color))}
+</style></head><body>
+<h1>CAMPUS SUITE</h1>
+<p class="sub">Choose a system to continue</p>
+<div class="grid">
+<div class="eb" data-color="#7df9ff" data-speed="1" data-chaos="0.12" data-radius="20"><a class="card r" href="room.html"><div class="ic">🏫</div><h2>Smart Room System</h2><span>AI-powered classroom availability, 3D floor map &amp; timetable.</span><br><span class="go">Open →</span></a></div>
+<div class="eb" data-color="#a78bfa" data-speed="1" data-chaos="0.12" data-radius="20"><a class="card" href="attendance.html"><div class="ic">📊</div><h2>Attendance Intelligence</h2><span>Track attendance, safe-bunk calculator &amp; advisor chatbot.</span><br><span class="go">Open →</span></a></div>
+</div>
+<script>
+/* Vanilla-JS port of ElectricBorder (inspired by @BalintFerenczy) */
+function electricBorder(host){
+  const color=host.dataset.color||'#5227FF',speed=+host.dataset.speed||1,chaos=+host.dataset.chaos||.12,borderRadius=+host.dataset.radius||24;
+  const content=document.createElement('div');content.className='eb-content';
+  while(host.firstChild)content.appendChild(host.firstChild);
+  host.className='electric-border';host.style.setProperty('--electric-border-color',color);host.style.borderRadius=borderRadius+'px';
+  host.innerHTML='<div class="eb-canvas-container"><canvas class="eb-canvas"></canvas></div><div class="eb-layers"><div class="eb-glow-1"></div><div class="eb-glow-2"></div><div class="eb-background-glow"></div></div>';
+  host.appendChild(content);
+  const canvas=host.querySelector('canvas'),ctx=canvas.getContext('2d');
+  const random=x=>(Math.sin(x*12.9898)*43758.5453)%1;
+  const noise2D=(x,y)=>{const i=Math.floor(x),j=Math.floor(y),fx=x-i,fy=y-j;
+    const a=random(i+j*57),b=random(i+1+j*57),c=random(i+(j+1)*57),d=random(i+1+(j+1)*57);
+    const ux=fx*fx*(3-2*fx),uy=fy*fy*(3-2*fy);
+    return a*(1-ux)*(1-uy)+b*ux*(1-uy)+c*(1-ux)*uy+d*ux*uy};
+  const octavedNoise=(x,oct,lac,gain,amp0,freq0,time,seed,flat)=>{let y=0,amp=amp0,f=freq0;
+    for(let i=0;i<oct;i++){let oa=amp;if(i===0)oa*=flat;y+=oa*noise2D(f*x+seed*100,time*f*.3);f*=lac;amp*=gain}return y};
+  const corner=(cx,cy,r,sa,al,p)=>{const a=sa+p*al;return{x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)}};
+  const rrPoint=(t,l,tp,w,h,r)=>{
+    const sw=w-2*r,sh=h-2*r,ca=Math.PI*r/2,total=2*sw+2*sh+4*ca,d=t*total;let acc=0;
+    if(d<=acc+sw)return{x:l+r+(d-acc)/sw*sw,y:tp};acc+=sw;
+    if(d<=acc+ca)return corner(l+w-r,tp+r,r,-Math.PI/2,Math.PI/2,(d-acc)/ca);acc+=ca;
+    if(d<=acc+sh)return{x:l+w,y:tp+r+(d-acc)/sh*sh};acc+=sh;
+    if(d<=acc+ca)return corner(l+w-r,tp+h-r,r,0,Math.PI/2,(d-acc)/ca);acc+=ca;
+    if(d<=acc+sw)return{x:l+w-r-(d-acc)/sw*sw,y:tp+h};acc+=sw;
+    if(d<=acc+ca)return corner(l+r,tp+h-r,r,Math.PI/2,Math.PI/2,(d-acc)/ca);acc+=ca;
+    if(d<=acc+sh)return{x:l,y:tp+h-r-(d-acc)/sh*sh};acc+=sh;
+    return corner(l+r,tp+r,r,Math.PI,Math.PI/2,(d-acc)/ca)};
+  const octaves=10,lacunarity=1.6,gain=.7,frequency=10,baseFlatness=0,displacement=60,borderOffset=60;
+  let width,height,time=0,last=0,raf;
+  const size=()=>{const r=host.getBoundingClientRect();width=r.width+borderOffset*2;height=r.height+borderOffset*2;
+    const dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=width*dpr;canvas.height=height*dpr;
+    canvas.style.width=width+'px';canvas.style.height=height+'px'};
+  size();
+  const draw=now=>{
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    time+=((now-last)/1000)*speed;last=now;
+    ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.scale(dpr,dpr);
+    ctx.strokeStyle=color;ctx.lineWidth=1;ctx.lineCap='round';ctx.lineJoin='round';
+    const bw=width-2*borderOffset,bh=height-2*borderOffset,radius=Math.min(borderRadius,Math.min(bw,bh)/2);
+    const n=Math.floor((2*(bw+bh)+2*Math.PI*radius)/2);
+    ctx.beginPath();
+    for(let i=0;i<=n;i++){const p=i/n,pt=rrPoint(p,borderOffset,borderOffset,bw,bh,radius);
+      const xn=octavedNoise(p*8,octaves,lacunarity,gain,chaos,frequency,time,0,baseFlatness);
+      const yn=octavedNoise(p*8,octaves,lacunarity,gain,chaos,frequency,time,1,baseFlatness);
+      const X=pt.x+xn*displacement,Y=pt.y+yn*displacement;i?ctx.lineTo(X,Y):ctx.moveTo(X,Y)}
+    ctx.closePath();ctx.stroke();
+    if(!reduce)raf=requestAnimationFrame(draw)};
+  const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  new ResizeObserver(()=>{size();if(reduce)draw(last)}).observe(host);
+  raf=requestAnimationFrame(draw);
+}
+document.querySelectorAll('.eb').forEach(electricBorder);
+</script>
+</body></html>
